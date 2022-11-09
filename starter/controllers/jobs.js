@@ -68,7 +68,26 @@ const updateJob = async (req, res) => {
   }
 };
 const deleteJob = async (req, res) => {
-  res.send("delete a job");
+  const {
+    user: { userId },
+    params: { id },
+  } = req;
+
+  try {
+    const job = await Job.findOne({ _id: id, createdBy: userId });
+    if (!job) {
+      return res.status(404).send({ msg: "Job not found" });
+    }
+    if (job["createdBy"].toString() !== req.user.userId) {
+      return res.status(401).json({ msg: "Not authorized" });
+    }
+    
+    const removedJob = await Job.findByIdAndDelete({ _id: id });
+
+    res.send(`You have delete ${removedJob} job`);
+  } catch (err) {
+    res.status(400).send(err);
+  }
 };
 
 module.exports = {
